@@ -1,0 +1,5 @@
+# Proxy Binance API calls to bypass CORS
+/binance-proxy/* https://api.binance.com/:splat  200!
+
+# Handle React Routing (Prevent 404s on refresh)
+/* /index.html  200
