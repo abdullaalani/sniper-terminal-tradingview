@@ -55,7 +55,7 @@ export class UserDataStreamService {
   private listenKey: string | null = null;
   private apiKey: string;
   private apiSecret: string;
-  private keepAliveTimer: number | null = null;
+  private keepAliveTimer: ReturnType<typeof setInterval> | null = null;
   private balanceSubscribers: BalanceUpdateCallback[] = [];
   private orderSubscribers: OrderUpdateCallback[] = [];
   private isConnected: boolean = false;
@@ -200,7 +200,7 @@ export class UserDataStreamService {
   // Private: Setup keep-alive timer
   private setupKeepAliveTimer() {
     // Keep-alive every 30 minutes (1800000 ms)
-    this.keepAliveTimer = window.setInterval(async () => {
+    this.keepAliveTimer = setInterval(async () => {
       if (this.listenKey) {
         try {
           await keepAliveUserDataStream(this.listenKey, this.apiKey, this.apiSecret);
