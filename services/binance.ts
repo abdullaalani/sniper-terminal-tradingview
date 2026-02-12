@@ -1,33 +1,34 @@
 const API_URL = '/api/proxy?path=';
 
-export const getBinanceMarkets = () => {
+export function getBinanceMarkets() {
     // function implementation
-};
+}
 
-export const getBinanceCandles = () => {
+export function getBinanceCandles() {
     // function implementation
-};
+}
+}
 
-export const getSymbolRules = () => {
+export function getSymbolRules() {
     // function implementation
-};
+}
 
-export const executeMarketBuy = () => {
+export function executeMarketBuy() {
     // function implementation
-};
+}
 
-export const placeOCOOrder = () => {
+export function placeOCOOrder() {
     // function implementation
-};
+}
 
-export const cancelAndReplaceOCO = () => {
+export function cancelAndReplaceOCO() {
     // function implementation
-};
+}
 
-export const closePosition = () => {
+export function closePosition() {
     // function implementation
-};
+}
 
-export const getAccountBalance = () => {
+export function getAccountBalance() {
     // function implementation
-};
+}
