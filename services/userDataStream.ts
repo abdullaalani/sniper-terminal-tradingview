@@ -1,5 +1,38 @@
 import { startUserDataStream, keepAliveUserDataStream, closeUserDataStream } from './binance';
 
+/**
+ * UserDataStreamService - Manages WebSocket connection to Binance User Data Stream
+ * 
+ * This service provides real-time updates for:
+ * - Account balance changes (outboundAccountPosition events)
+ * - Order status updates (executionReport events)
+ * 
+ * @example
+ * ```typescript
+ * // Create service instance
+ * const service = new UserDataStreamService(apiKey, apiSecret);
+ * 
+ * // Subscribe to balance updates
+ * const unsubBalance = service.subscribeToBalanceUpdates((balances) => {
+ *   console.log('Balance update:', balances);
+ * });
+ * 
+ * // Subscribe to order updates
+ * const unsubOrders = service.subscribeToOrderUpdates((order) => {
+ *   console.log('Order update:', order.X, order.s); // Status and Symbol
+ * });
+ * 
+ * // Start the stream
+ * await service.start();
+ * 
+ * // Later, stop the stream
+ * await service.stop();
+ * 
+ * // Or use the factory function
+ * const service = createUserDataStreamService(apiKey, apiSecret);
+ * ```
+ */
+
 // Event types from Binance User Data Stream
 interface OutboundAccountPosition {
   e: 'outboundAccountPosition';
