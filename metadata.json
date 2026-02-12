@@ -1,0 +1,11 @@
+{
+  "name": "Copy of working wellSniper Terminal",
+  "description": "S-Tier Crypto Trading Terminal with Visual Position Sizing and Binance Integration.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "electron": {
+    "width": 1280,
+    "height": 800
+  }
+}
