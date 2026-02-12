@@ -7,7 +7,6 @@ export function getBinanceMarkets() {
 export function getBinanceCandles() {
     // function implementation
 }
-}
 
 export function getSymbolRules() {
     // function implementation
