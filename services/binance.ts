@@ -196,3 +196,21 @@ export const getAccountBalance = async (apiKey: string, apiSecret: string): Prom
   const usdtAsset = res.balances.find((b: any) => b.asset === 'USDT');
   return usdtAsset ? parseFloat(usdtAsset.free) : 0;
 };
+
+// --- User Data Stream ---
+
+// 7. Start User Data Stream
+export const startUserDataStream = async (apiKey: string, apiSecret: string): Promise<string> => {
+  const res = await binanceRequest('/api/v3/userDataStream', 'POST', {}, apiKey, apiSecret);
+  return res.listenKey;
+};
+
+// 8. Keep Alive User Data Stream
+export const keepAliveUserDataStream = async (listenKey: string, apiKey: string, apiSecret: string): Promise<void> => {
+  await binanceRequest('/api/v3/userDataStream', 'PUT', { listenKey }, apiKey, apiSecret);
+};
+
+// 9. Close User Data Stream
+export const closeUserDataStream = async (listenKey: string, apiKey: string, apiSecret: string): Promise<void> => {
+  await binanceRequest('/api/v3/userDataStream', 'DELETE', { listenKey }, apiKey, apiSecret);
+};
