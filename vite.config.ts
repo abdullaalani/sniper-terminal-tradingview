@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   base: './', // Crucial for Electron and Capacitor to find assets
+  publicDir: 'public', // Explicitly set public directory
   build: {
     outDir: 'dist',
     emptyOutDir: true,
