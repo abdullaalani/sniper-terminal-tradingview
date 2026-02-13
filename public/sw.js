@@ -2,8 +2,7 @@
 const CACHE_NAME = 'sniper-terminal-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/index.css'
+  '/index.html'
 ];
 
 // Install event - cache static resources
@@ -37,7 +36,7 @@ self.addEventListener('fetch', (event) => {
         
         return fetch(fetchRequest).then((response) => {
           // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+          if (!response || response.status !== 200 || response.type === 'opaque') {
             return response;
           }
           
@@ -68,9 +67,9 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Claim clients immediately
+      return self.clients.claim();
     })
   );
-  
-  // Claim clients immediately
-  return self.clients.claim();
 });
