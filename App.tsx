@@ -124,7 +124,7 @@ const App: React.FC = () => {
             const pos = prev.positions.find(p => p.symbol === symbol);
             if (!pos) return prev;
 
-            const exitPrice = cumulativeQuoteQty / executedQty || event.lastPrice;
+            const exitPrice = executedQty > 0 ? cumulativeQuoteQty / executedQty : event.lastPrice;
             const exitFee = (pos.size * exitPrice) * TRADING_FEE_RATE;
             const grossPnl = (exitPrice - pos.entryPrice) * pos.size;
             const netPnl = grossPnl - pos.entryFee - exitFee;

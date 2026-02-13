@@ -76,10 +76,10 @@ class MarketDataService {
     const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_DELAY);
     console.log(`Reconnecting market stream in ${delay}ms (attempt ${this.reconnectAttempts + 1})`);
     this.reconnectTimer = window.setTimeout(() => {
-      this.reconnectAttempts++;
       if (this.currentSymbol && this.currentInterval) {
         this.initWebSocket(this.currentSymbol, this.currentInterval);
       }
+      this.reconnectAttempts++;
     }, delay);
   }
 

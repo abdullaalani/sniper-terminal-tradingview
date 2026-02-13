@@ -106,13 +106,14 @@ class UserDataStreamService {
     const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_DELAY);
     console.log(`Reconnecting user data stream in ${delay}ms (attempt ${this.reconnectAttempts + 1})`);
     this.reconnectTimer = window.setTimeout(async () => {
-      this.reconnectAttempts++;
       if (this.apiKey) {
         try {
           this.listenKey = await createListenKey(this.apiKey);
           this.initWebSocket();
+          this.reconnectAttempts++;
         } catch (err) {
           console.error('Reconnect failed:', err);
+          this.reconnectAttempts++;
           this.scheduleReconnect();
         }
       }

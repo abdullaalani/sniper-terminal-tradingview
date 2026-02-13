@@ -48,7 +48,7 @@ const MarketList: React.FC<MarketListProps> = ({ onSelect, activeSymbol, isMobil
       ws.onclose = () => {
         if (!destroyed) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-          reconnectTimer = window.setTimeout(() => { reconnectAttempts++; connectMiniTicker(); }, delay);
+          reconnectTimer = window.setTimeout(() => { connectMiniTicker(); reconnectAttempts++; }, delay);
         }
       };
       ws.onerror = (err) => { console.error('Mini ticker WS error', err); };
