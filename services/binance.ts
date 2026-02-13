@@ -2,7 +2,8 @@
 import { MarketTicker, Candle } from '../types';
 import CryptoJS from 'crypto-js';
 
-const API_URL = 'https://api.binance.com';
+const BASE_URL = '/binance-proxy';
+
 
 // --- Public Data ---
 
