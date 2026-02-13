@@ -76,7 +76,7 @@ const sign = (queryString: string, apiSecret: string) => {
 // Helper for authenticated fetch
 const binanceRequest = async (endpoint: string, method: string, params: Record<string, any>, apiKey: string, apiSecret: string) => {
   const timestamp = Date.now();
-  const queryParams = new URLSearchParams({ ...params, timestamp: timestamp.toString() });
+  const queryParams = new URLSearchParams({ ...params, recvWindow: '10000', timestamp: timestamp.toString() });
   const signature = sign(queryParams.toString(), apiSecret);
   queryParams.append('signature', signature);
 
@@ -195,4 +195,34 @@ export const getAccountBalance = async (apiKey: string, apiSecret: string): Prom
   const res = await binanceRequest('/api/v3/account', 'GET', {}, apiKey, apiSecret);
   const usdtAsset = res.balances.find((b: any) => b.asset === 'USDT');
   return usdtAsset ? parseFloat(usdtAsset.free) : 0;
+};
+
+// --- User Data Stream (Listen Key) ---
+
+export const createListenKey = async (apiKey: string): Promise<string> => {
+  const response = await fetch(`${API_URL}/api/v3/userDataStream`, {
+    method: 'POST',
+    headers: { 'X-MBX-APIKEY': apiKey },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.msg || 'Failed to create listen key');
+  return data.listenKey;
+};
+
+export const keepAliveListenKey = async (apiKey: string, listenKey: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/api/v3/userDataStream?listenKey=${listenKey}`, {
+    method: 'PUT',
+    headers: { 'X-MBX-APIKEY': apiKey },
+  });
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.msg || 'Failed to keep alive listen key');
+  }
+};
+
+export const deleteListenKey = async (apiKey: string, listenKey: string): Promise<void> => {
+  await fetch(`${API_URL}/api/v3/userDataStream?listenKey=${listenKey}`, {
+    method: 'DELETE',
+    headers: { 'X-MBX-APIKEY': apiKey },
+  });
 };
