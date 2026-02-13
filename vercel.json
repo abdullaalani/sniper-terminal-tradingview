@@ -1,0 +1,1 @@
+{\n  "rewrites": [\n    {\n      "source": "/binance-proxy/:path*",\n      "destination": "https://api.binance.com/:path*"\n    }\n  ]\n}
