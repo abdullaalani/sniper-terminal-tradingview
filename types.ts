@@ -59,3 +59,24 @@ export enum AppMode {
   VIEWING = 'VIEWING',
   placing_SL = 'PLACING_SL',
 }
+
+// Binance User Data Stream Events
+
+export interface ExecutionReportEvent {
+  eventType: 'executionReport';
+  symbol: string;
+  orderId: number;
+  orderStatus: string;   // NEW, PARTIALLY_FILLED, FILLED, CANCELED, REJECTED, EXPIRED
+  side: string;           // BUY or SELL
+  orderType: string;      // MARKET, LIMIT, STOP_LOSS_LIMIT, etc.
+  executedQty: number;
+  cumulativeQuoteQty: number;
+  lastPrice: number;
+}
+
+export interface BalanceUpdateEvent {
+  eventType: 'outboundAccountPosition';
+  balances: { asset: string; free: number; locked: number }[];
+}
+
+export type UserDataEvent = ExecutionReportEvent | BalanceUpdateEvent;

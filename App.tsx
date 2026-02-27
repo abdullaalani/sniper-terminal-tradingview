@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { marketService } from './services/marketData';
+import { userDataStream } from './services/userDataStream';
 import { getBinanceCandles, getSymbolRules, executeMarketBuy, placeOCOOrder, closePosition, getAccountBalance } from './services/binance';
 import { hasSavedKeys } from './services/crypto';
-import { Candle, Position, TradeConfig, AccountState, TradeHistoryItem } from './types';
+import { Candle, Position, TradeConfig, AccountState, TradeHistoryItem, UserDataEvent } from './types';
 import { INITIAL_BALANCE, TRADING_FEE_RATE } from './constants';
 import TVChart from './components/TVChart';
 import ControlPanel from './components/ControlPanel';
@@ -91,9 +92,72 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!apiKeys) return;
     refreshBalance(true);
-    const timer = window.setInterval(() => refreshBalance(), 10000);
-    return () => window.clearInterval(timer);
+
+    // Connect User Data Stream for real-time order/balance updates
+    userDataStream.connect(apiKeys.apiKey);
+
+    // Fallback balance polling at a slower rate (WebSocket is primary)
+    const timer = window.setInterval(() => refreshBalance(), 30000);
+    return () => {
+      window.clearInterval(timer);
+      userDataStream.disconnect();
+    };
   }, [apiKeys, refreshBalance]);
+
+  // Handle real-time User Data Stream events (order fills, balance changes)
+  useEffect(() => {
+    if (!apiKeys) return;
+    const unsubscribe = userDataStream.subscribe((event: UserDataEvent) => {
+      if (event.eventType === 'outboundAccountPosition') {
+        const usdtBalance = event.balances.find(b => b.asset === 'USDT');
+        if (usdtBalance) {
+          setAccount(prev => ({ ...prev, balance: usdtBalance.free }));
+        }
+      }
+
+      if (event.eventType === 'executionReport') {
+        const { symbol, side, orderStatus, executedQty, cumulativeQuoteQty } = event;
+
+        // Detect when an OCO sell order fills (SL or TP was triggered)
+        if (side === 'SELL' && orderStatus === 'FILLED') {
+          setAccount(prev => {
+            const pos = prev.positions.find(p => p.symbol === symbol);
+            if (!pos) return prev;
+
+            const exitPrice = executedQty > 0 ? cumulativeQuoteQty / executedQty : event.lastPrice;
+            const exitFee = (pos.size * exitPrice) * TRADING_FEE_RATE;
+            const grossPnl = (exitPrice - pos.entryPrice) * pos.size;
+            const netPnl = grossPnl - pos.entryFee - exitFee;
+
+            const historyItem: TradeHistoryItem = {
+              id: pos.id,
+              symbol: pos.symbol,
+              entryPrice: pos.entryPrice,
+              exitPrice,
+              size: pos.size,
+              entryTime: pos.timestamp,
+              exitTime: Date.now(),
+              entryFee: pos.entryFee,
+              exitFee,
+              grossPnl,
+              netPnl,
+              isWin: netPnl > 0,
+              direction: pos.direction,
+            };
+
+            addLog(`OCO Filled: ${symbol} exit @ ${exitPrice.toFixed(2)} | PnL: $${netPnl.toFixed(2)}`, netPnl >= 0 ? 'success' : 'error');
+
+            return {
+              ...prev,
+              positions: prev.positions.filter(p => p.symbol !== symbol),
+              history: [...prev.history, historyItem],
+            };
+          });
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [apiKeys]);
 
   useEffect(() => {
     let ignore = false;

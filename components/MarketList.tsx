@@ -19,13 +19,11 @@ const MarketList: React.FC<MarketListProps> = ({ onSelect, activeSymbol, isMobil
 
   useEffect(() => {
     let ws: WebSocket | null = null;
+    let reconnectTimer: number | null = null;
+    let reconnectAttempts = 0;
+    let destroyed = false;
 
-    const init = async () => {
-      const initialData = await getBinanceMarkets();
-      initialData.forEach(m => marketMapRef.current.set(m.symbol, m));
-      setMarkets(Array.from(marketMapRef.current.values()));
-      setLoading(false);
-
+    const connectMiniTicker = () => {
       ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
       ws.onmessage = (event) => {
         try {
@@ -46,10 +44,30 @@ const MarketList: React.FC<MarketListProps> = ({ onSelect, activeSymbol, isMobil
           if (hasUpdates) setMarkets(Array.from(marketMapRef.current.values()));
         } catch (e) { console.error(e); }
       };
+      ws.onopen = () => { reconnectAttempts = 0; };
+      ws.onclose = () => {
+        if (!destroyed) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+          reconnectTimer = window.setTimeout(() => { connectMiniTicker(); reconnectAttempts++; }, delay);
+        }
+      };
+      ws.onerror = (err) => { console.error('Mini ticker WS error', err); };
+    };
+
+    const init = async () => {
+      const initialData = await getBinanceMarkets();
+      initialData.forEach(m => marketMapRef.current.set(m.symbol, m));
+      setMarkets(Array.from(marketMapRef.current.values()));
+      setLoading(false);
+      connectMiniTicker();
     };
 
     init();
-    return () => { if (ws) ws.close(); };
+    return () => {
+      destroyed = true;
+      if (ws) ws.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
   }, []);
 
   const filteredMarkets = useMemo(() => {

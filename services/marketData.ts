@@ -2,12 +2,17 @@ import { Candle } from '../types';
 
 type Subscriber = (candle: Candle) => void;
 
+const MAX_RECONNECT_DELAY = 30000;
+const INITIAL_RECONNECT_DELAY = 1000;
+
 class MarketDataService {
   private ws: WebSocket | null = null;
   private subscribers: Subscriber[] = [];
   private currentSymbol: string | null = null;
   private currentInterval: string | null = null;
   private reconnectTimer: number | null = null;
+  private reconnectAttempts: number = 0;
+  private intentionalClose: boolean = false;
 
   public subscribe(callback: Subscriber) {
     this.subscribers.push(callback);
@@ -17,22 +22,22 @@ class MarketDataService {
   }
 
   public connect(symbol: string, interval: string) {
-    // If symbol and interval match, and connection is open, do nothing
     if (this.currentSymbol === symbol && this.currentInterval === interval && this.ws?.readyState === WebSocket.OPEN) return;
     
     this.disconnect();
     this.currentSymbol = symbol;
     this.currentInterval = interval;
+    this.intentionalClose = false;
     
     this.initWebSocket(symbol, interval);
   }
 
   private initWebSocket(symbol: string, interval: string) {
-    // Connect to Binance Spot WebSocket with dynamic interval
     this.ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`);
 
     this.ws.onopen = () => {
       console.log(`Connected to Binance WS for ${symbol} ${interval}`);
+      this.reconnectAttempts = 0;
     };
 
     this.ws.onmessage = (event) => {
@@ -55,8 +60,10 @@ class MarketDataService {
     };
 
     this.ws.onclose = () => {
-      // Simple reconnect logic if needed, but for now we just log
       console.log("Binance WS Closed");
+      if (!this.intentionalClose && this.currentSymbol && this.currentInterval) {
+        this.scheduleReconnect();
+      }
     };
 
     this.ws.onerror = (err) => {
@@ -64,7 +71,20 @@ class MarketDataService {
     };
   }
 
+  private scheduleReconnect() {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    const delay = Math.min(INITIAL_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_DELAY);
+    console.log(`Reconnecting market stream in ${delay}ms (attempt ${this.reconnectAttempts + 1})`);
+    this.reconnectTimer = window.setTimeout(() => {
+      if (this.currentSymbol && this.currentInterval) {
+        this.initWebSocket(this.currentSymbol, this.currentInterval);
+      }
+      this.reconnectAttempts++;
+    }, delay);
+  }
+
   public disconnect() {
+    this.intentionalClose = true;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -73,7 +93,7 @@ class MarketDataService {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    // Reset trackers
+    this.reconnectAttempts = 0;
     this.currentSymbol = null;
     this.currentInterval = null;
   }
